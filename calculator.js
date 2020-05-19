@@ -6,8 +6,11 @@ const calculatorInput = document.getElementsByClassName(
 	"calculator_display_input"
 )[0];
 
+const keys = Array.from(document.getElementsByClassName("key"));
+
 var expStr = "";
 var inputStr = "";
+var isEnd = false; // "=" 이가 전단계에서 입력되었는지
 
 // 괄호 체크
 function checkBracket(str) {
@@ -42,8 +45,9 @@ buttons.map((btn) =>
 		const pressText = btn.value.toString();
 
 		if (pressText == "=") {
-			if (expStr == "") return false;
-
+			if (isEnd) {
+				return false;
+			}
 			// 괄호 안맞는 경우
 			if (!checkBracket(expStr + inputStr)) {
 				freezeButton();
@@ -54,13 +58,25 @@ buttons.map((btn) =>
 				return false;
 			}
 
-			let result = eval(expStr + inputStr);
+			let finalExp = expStr + inputStr;
 
-			calculatorInput.innerHTML = result;
-			calculatorExp.innerHTML = `${expStr + inputStr}=`;
+			// "숫자(숫자", "숫자)숫자" 에서 묵시적으로 * 삽입
+			finalExp = finalExp.replace(/(\d)(\(\d)/gi, "$1*$2");
+			finalExp = finalExp.replace(/(\d\))(\d)/gi, "$1*$2");
+
+			const result = eval(finalExp).toString();
+
+			calculatorInput.innerHTML =
+				result.length > 17 ? "..." + result.slice(result.length - 17) : result;
+			calculatorExp.innerHTML = `${
+				finalExp.length > 27
+					? "..." + finalExp.slice(finalExp.length - 27)
+					: finalExp
+			}=`;
 
 			expStr = result.toString();
 			inputStr = "";
+			isEnd = true;
 		} else {
 			switch (pressText) {
 				case "clear":
@@ -82,16 +98,119 @@ buttons.map((btn) =>
 				case "*":
 				case "/":
 				case "%":
+				case "<<":
+				case ">>":
+				case "(":
+				case ")":
 					expStr += inputStr + pressText;
 					inputStr = "";
 					break;
 
 				default:
+					if (isEnd) {
+						expStr = "";
+					}
+					// 전 단계에서 = 눌러 결과 나온뒤 바로 숫자 누르면 결과 초기화
 					inputStr += pressText;
+					isEnd = false;
 			}
 
-			calculatorInput.innerHTML = inputStr;
-			calculatorExp.innerHTML = expStr;
+			calculatorInput.innerHTML =
+				inputStr.length > 17
+					? "..." + inputStr.slice(inputStr.length - 17)
+					: inputStr;
+			calculatorExp.innerHTML =
+				expStr.length > 25 ? "..." + expStr.slice(expStr.length - 23) : expStr;
 		}
 	})
 );
+
+// 키 누르는 것 이벤트
+window.addEventListener("keyup", (e) => {
+	const pressText = e.key;
+
+	if (pressText == "Enter") {
+		if (isEnd) {
+			return false;
+		}
+
+		// 괄호 안맞는 경우
+		if (!checkBracket(expStr + inputStr)) {
+			freezeButton();
+
+			calculatorExp.innerHTML = `${expStr + inputStr}=`;
+			calculatorInput.innerHTML = "Bracket ERROR";
+
+			return false;
+		}
+
+		let finalExp = expStr + inputStr;
+
+		// "숫자(숫자", "숫자)숫자" 에서 묵시적으로 * 삽입
+		finalExp = finalExp.replace(/(\d)(\(\d)/gi, "$1*$2");
+		finalExp = finalExp.replace(/(\d\))(\d)/gi, "$1*$2");
+
+		const result = eval(finalExp).toString();
+
+		calculatorInput.innerHTML =
+			result.length > 17 ? "..." + result.slice(result.length - 17) : result;
+		calculatorExp.innerHTML = `${
+			finalExp.length > 27
+				? "..." + finalExp.slice(finalExp.length - 27)
+				: finalExp
+		}=`;
+
+		expStr = result.toString();
+		inputStr = "";
+		isEnd = true;
+	} else {
+		switch (pressText) {
+			case "Escape":
+				expStr = "";
+				inputStr = "";
+				meltButton();
+				break;
+
+			case "Backspace":
+			case "Delete":
+				// <<, >>을 지우는 경우
+				if (inputStr == "<" || ">")
+					inputStr = inputStr.substr(0, inputStr.length - 1);
+				else inputStr = inputStr.substr(0, inputStr.length);
+
+				break;
+
+			case "+":
+			case "-":
+			case "*":
+			case "/":
+			case "%":
+			case "<<":
+			case ">>":
+			case "(":
+			case ")":
+				expStr += inputStr + pressText;
+				inputStr = "";
+				break;
+
+			default:
+				if (isEnd) {
+					expStr = "";
+				}
+				// f1~f9, prtsc키등 입력 방지
+				if (
+					pressText in
+					["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "(", ")"]
+				)
+					inputStr += pressText;
+				isEnd = false;
+		}
+
+		calculatorInput.innerHTML =
+			inputStr.length > 17
+				? "..." + inputStr.slice(inputStr.length - 17)
+				: inputStr;
+		calculatorExp.innerHTML =
+			expStr.length > 25 ? "..." + expStr.slice(expStr.length - 23) : expStr;
+	}
+});

@@ -24,6 +24,14 @@ main {
 	text-align: center;
 }
 
+.description :first-child {
+	margin-bottom: 10px;
+}
+
+.description :last-child {
+	margin-bottom: 20px;
+}
+
 #calculator {
 	padding: 15px;
 	height: 500px;
@@ -36,6 +44,7 @@ main {
 	margin: 20px 0;
 	padding: 5px;
 	border-radius: 20px;
+	box-shadow: 5px 5px 5px #97a2ff;
 
 	text-align: right;
 	vertical-align: middle;
@@ -79,6 +88,10 @@ button[type="controll"] {
 
 button[type="number"] {
 	background-color: #2d54a8;
+}
+
+button:disabled {
+	background-color: brown;
 }
 
 button[value="0"] {
