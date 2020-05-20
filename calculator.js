@@ -112,8 +112,8 @@ buttons.map((btn) =>
 					}
 					// 전 단계에서 = 눌러 결과 나온뒤 바로 숫자 누르면 결과 초기화
 					inputStr += pressText;
-					isEnd = false;
 			}
+			isEnd = false;
 
 			calculatorInput.innerHTML =
 				inputStr.length > 17
@@ -126,7 +126,7 @@ buttons.map((btn) =>
 );
 
 // 키 누르는 것 이벤트
-window.addEventListener("keyup", (e) => {
+window.addEventListener("keydown", (e) => {
 	const pressText = e.key;
 
 	if (pressText == "Enter") {
@@ -150,7 +150,16 @@ window.addEventListener("keyup", (e) => {
 		finalExp = finalExp.replace(/(\d)(\(\d)/gi, "$1*$2");
 		finalExp = finalExp.replace(/(\d\))(\d)/gi, "$1*$2");
 
-		const result = eval(finalExp).toString();
+		let result;
+		try {
+			result = eval(finalExp).toString();
+		} catch (e) {
+			freezeButton();
+
+			calculatorExp.innerHTML = `${expStr + inputStr}=`;
+			calculatorInput.innerHTML = "Input ERROR";
+			return false;
+		}
 
 		calculatorInput.innerHTML =
 			result.length > 17 ? "..." + result.slice(result.length - 17) : result;
@@ -191,6 +200,7 @@ window.addEventListener("keyup", (e) => {
 			case ")":
 				expStr += inputStr + pressText;
 				inputStr = "";
+
 				break;
 
 			default:
@@ -203,8 +213,8 @@ window.addEventListener("keyup", (e) => {
 					["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "(", ")"]
 				)
 					inputStr += pressText;
-				isEnd = false;
 		}
+		isEnd = false;
 
 		calculatorInput.innerHTML =
 			inputStr.length > 17
@@ -212,5 +222,31 @@ window.addEventListener("keyup", (e) => {
 				: inputStr;
 		calculatorExp.innerHTML =
 			expStr.length > 25 ? "..." + expStr.slice(expStr.length - 23) : expStr;
+	}
+});
+
+// 툴팁 보이게 하는 버튼
+const toolTipBtn = document.getElementsByClassName("tool-tip-button")[0];
+const toolTip = document.getElementsByClassName("tool-tip")[0];
+
+const toolTipPos = toolTip.getBoundingClientRect();
+const btnPos = toolTipBtn.getBoundingClientRect();
+
+const pos = {
+	x: (btnPos.right - btnPos.left) / 2 + btnPos.left - toolTipPos.width / 2,
+	y: `${btnPos.bottom + 10}`,
+};
+
+// 툴팁 버튼 클락시 툴팁 버튼 바로 아래에 툴팁 나옴
+toolTipBtn.addEventListener("click", () => {
+	if (toolTip.classList.contains("active")) {
+		toolTip.style.left = -99999;
+		toolTip.classList.remove("active");
+		toolTipBtn.innerHTML = "view tip";
+	} else {
+		toolTip.style.setProperty("left", `${pos.x}`);
+		toolTip.style.setProperty("top", `${pos.y}`);
+		toolTip.classList.add("active");
+		toolTipBtn.innerHTML = "close tip";
 	}
 });
